@@ -1,4 +1,4 @@
-package com.xtremeglory.data_structure.list.array;
+package com.xtremeglory.data_structure.line.array;
 
 public class Queue<T> {
     private static final int DEFAULT_SIZE = 20;

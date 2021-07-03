@@ -1,4 +1,4 @@
-package com.xtremeglory.data_structure.list.array;
+package com.xtremeglory.data_structure.line.array;
 
 import com.xtremeglory.utils.CopyUtils;
 

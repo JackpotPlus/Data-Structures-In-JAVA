@@ -1,14 +1,16 @@
 package com.xtremeglory.data_structure.line.list;
 
-import com.xtremeglory.utils.CopyUtils;
-import com.xtremeglory.utils.DebugUtils;
+import com.xtremeglory.util.CopyUtils;
 
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.RandomAccess;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 //有序线性表，表的存取以及删除操作不会影响已有元素的顺序
-public final class ArrayList<T> implements List<T> {
-    private DebugUtils $ = new DebugUtils(this.getClass());
+public class ArrayList<T> implements List<T>, RandomAccess {
+    private Logger logger = Logger.getLogger("com.xtremeglory.data_structure.line.list");
 
     private static final int DEFAULT_SIZE = 100;
     private static final int INCREASE_SIZE = 20;
@@ -26,7 +28,7 @@ public final class ArrayList<T> implements List<T> {
 
     public ArrayList(int capacity) {
         if (capacity <= 0) {
-            $.logging("线性表初始大小不能小于等于0", true, true, true);
+            throw new IllegalArgumentException("线性表的初始长度必须大于0!");
         }
         if (capacity < DEFAULT_SIZE) {
             capacity = DEFAULT_SIZE;
@@ -36,17 +38,14 @@ public final class ArrayList<T> implements List<T> {
         this.capacity = capacity;
     }
 
-    @Override
-    public int size() {
-        return this.size;
+    public ArrayList(Level level) {
+        this();
+        logger.setLevel(level);
     }
 
-    private boolean rangeCheck(int index, boolean extend) {
-        if (extend) {
-            return index >= 0 && index <= this.size;
-        } else {
-            return index >= 0 && index < this.size;
-        }
+    @Override
+    public int size() {
+        return size;
     }
 
     @Override
@@ -54,32 +53,27 @@ public final class ArrayList<T> implements List<T> {
         //判空
         if (elem == null) {
             //线性表允许插入null元素,但会发出警告
-            $.logging("当前插入元素为null", false);
+            logger.warning("输入元素为null");
         }
         //检查索引
-        if (!rangeCheck(index, true)) {
-            $.logging("非法的访问下标:" + index + ",当前线性表长度为:" + size, true);
-            return;
-        }
+        if (rangeCheck(index, true)) {
+            //检查空间是否充足
+            if (size == capacity) {
+                //扩充容量
+                Object[] past = elements;
+                elements = new Object[this.capacity + INCREASE_SIZE];
+                capacity += INCREASE_SIZE;
+                System.arraycopy(past, 0, this.elements, 0, past.length);
+            }
 
-        //检查空间是否充足
-        if (this.size == this.capacity) {
-            //扩充容量
-            Object[] past = this.elements;
-            this.elements = new Object[this.capacity + INCREASE_SIZE];
-            this.capacity += INCREASE_SIZE;
-            System.arraycopy(past, 0, this.elements, 0, past.length);
-        }
-
-        //插入操作
-        if (this.size - index > 0) {
-            System.arraycopy(this.elements, index, this.elements, index + 1, this.size - index);
-        }
-        ++this.size;
-        if (clone) {
-            this.elements[index] = CopyUtils.clone(elem);
+            //插入操作
+            if (size - index > 0) {
+                System.arraycopy(elements, index, elements, index + 1, size - index);
+            }
+            elements[index] = clone ? CopyUtils.clone(elem) : elem;
+            ++size;
         } else {
-            this.elements[index] = elem;
+            throw new ArrayIndexOutOfBoundsException(index);
         }
     }
 
@@ -87,72 +81,100 @@ public final class ArrayList<T> implements List<T> {
     @Override
     public T get(int index) {
         if (rangeCheck(index, false)) {
-            return (T) this.elements[index];
+            return (T) elements[index];
+        } else {
+            throw new ArrayIndexOutOfBoundsException(index);
         }
-        $.logging("非法的访问下标:" + index + ",当前线性表长度为:" + size, true);
-        return null;
     }
 
     @Override
-    public void set(int index, T elem, boolean clone) {
+    public void set(T elem, int index, boolean clone) {
         if (rangeCheck(index, false)) {
-            if (clone) {
-                elements[index] = CopyUtils.clone(elem);
-            } else {
-                elements[index] = elem;
-            }
+            elements[index] = clone ? CopyUtils.clone(elem) : elem;
+        } else {
+            throw new ArrayIndexOutOfBoundsException(index);
         }
-        $.logging("非法的访问下标:" + index + ",当前线性表长度为:" + size, true);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public T remove(int index) {
         if (rangeCheck(index, false)) {
-            T elem = (T) this.elements[index];
-            System.arraycopy(this.elements, index + 1, this.elements, index, this.size - index - 1);
-            --this.size;
+            T elem = (T) elements[index];
+            System.arraycopy(elements, index + 1, elements, index, size - index - 1);
+            --size;
             return elem;
+        } else {
+            throw new ArrayIndexOutOfBoundsException(index);
         }
-        $.logging("非法的访问下标:" + index + ",当前线性表长度为:" + size, true);
-        return null;
     }
 
     @Override
     public void clear() {
-        this.size = 0;
+        size = 0;
     }
 
     @Override
     public void destroy() {
-        this.elements = null;
-        this.size = 0;
-        this.capacity = 0;
+        elements = null;
+        size = 0;
+        capacity = 0;
     }
 
     @Override
     public int indexOf(T elem, int begin) {
-        for (int i = begin; i < this.size; ++i) {
-            Object element = this.elements[i];
-            if (elem.equals(element)) {
-                return i;
+        if (!rangeCheck(begin, false)) {
+            throw new ArrayIndexOutOfBoundsException(begin);
+        }
+        if (elem != null) {
+            for (int i = begin; i < size; ++i) {
+                Object element = elements[i];
+                if (elem.equals(element)) {
+                    return i;
+                }
+            }
+        } else {
+            for (int i = begin; i < size; ++i) {
+                if (elements[i] == null) {
+                    return i;
+                }
             }
         }
-        $.logging("元素不存在:" + elem, false);
+        logger.info("未找到元素:" + elem);
         return ELEM_NOT_EXIST_INDEX;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public int indexOf(T elem, Comparator<T> cmp, int begin) {
-        for (int i = begin; i < this.size; ++i) {
-            T element = (T) this.elements[i];
-            if (cmp.compare(elem, element) == 0) {
-                return i;
+        if (!rangeCheck(begin, false)) {
+            throw new ArrayIndexOutOfBoundsException(begin);
+        }
+        if (elem != null) {
+            for (int i = begin; i < size; ++i) {
+                T element = (T) elements[i];
+                if (element != null && cmp.compare(elem, element) == 0) {
+                    return i;
+                }
+            }
+        } else {
+            for (int i = begin; i < size; ++i) {
+                if (elements[i] == null) {
+                    return i;
+                }
             }
         }
-        $.logging("元素不存在:" + elem + ",当前使用自定义比较逻辑", false);
+        logger.info("未找到元素:" + elem);
         return ELEM_NOT_EXIST_INDEX;
+    }
+
+    @Override
+    public List<T> reverse(boolean clone) {
+        List<T> list = new ArrayList<>();
+        for (int i = size - 1; i > -1; --i) {
+            list.insertLast(this.get(i));
+        }
+        return list;
     }
 
     @Override
@@ -176,6 +198,19 @@ public final class ArrayList<T> implements List<T> {
         @Override
         public T next() {
             return list.get(++index);
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (T elem : this) {
+            sb.append(elem == null ? "<null>" : elem.toString()).append(",");
+        }
+        if (sb.length() > 1) {
+            return "[" + sb.substring(0, sb.length() - 1) + "]";
+        } else {
+            return "[]";
         }
     }
 }

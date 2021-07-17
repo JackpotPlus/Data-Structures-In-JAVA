@@ -22,6 +22,21 @@ public interface List<T> extends Iterable<T> {
      */
     int size();
 
+    /**
+     * 检查是否是合法下标
+     *
+     * @param index  被检查的下标
+     * @param extend 是否是插入操作
+     * @return 下标是否合法
+     */
+    default boolean rangeCheck(int index, boolean extend) {
+        if (extend) {
+            return index >= 0 && index <= size();
+        } else {
+            return index >= 0 && index < size();
+        }
+    }
+
     //增
 
     /**
@@ -85,12 +100,11 @@ public interface List<T> extends Iterable<T> {
 
     /**
      * 修改该位置元素为指定值
-     *
+     *  @param elem  被插入元素
      * @param index 指定位置下标
-     * @param elem  被插入元素
      * @param clone 是否执行深拷贝
      */
-    void set(int index, T elem, boolean clone);
+    void set(T elem, int index, boolean clone);
 
     /**
      * 修改该位置元素为指定值
@@ -99,22 +113,7 @@ public interface List<T> extends Iterable<T> {
      * @param elem  被插入元素
      */
     default void set(int index, T elem) {
-        set(index, elem, false);
-    }
-
-    /**
-     * 用指定数据填充指定长度线性表元素
-     *
-     * @param elem  指定数据
-     * @param size  复制长度
-     * @param clone 是否执行深拷贝
-     */
-    default void set(T elem, int size, boolean clone) {
-        int i = 0;
-        while (i < size) {
-            set(i, elem, clone);
-            ++i;
-        }
+        set(elem, index, false);
     }
 
     /**
@@ -291,4 +290,44 @@ public interface List<T> extends Iterable<T> {
     default boolean contains(T elem, Comparator<T> cmp) {
         return contains(elem, cmp, 0);
     }
+
+    default void print() {
+        StringBuilder sb = new StringBuilder();
+        for (T elem : this) {
+            sb.append(elem.toString()).append(",");
+        }
+        if (sb.length() > 1) {
+            System.out.println("[" + sb.substring(0, sb.length() - 1) + "]");
+        } else {
+            System.out.println("[]");
+        }
+    }
+
+    /*下列方法为练习题中添加到本API的方法*/
+    //[数据结构与算法分析] 第68页3.9题
+    default void addAll(Iterable<? extends T> items, boolean clone) {
+        for (T elem : items) {
+            insertLast(elem, clone);
+        }
+    }
+
+    default void addAll(Iterable<? extends T> items) {
+        addAll(items, false);
+    }
+
+    //[数据结构与算法分析] 第68页3.10题
+    default void removeAll(Iterable<? extends T> items) {
+        for (T elem : items) {
+            remove(indexOf(elem));
+        }
+    }
+
+    //[数据结构与算法分析] 第69页3.16题,略做修改
+    List<T> reverse(boolean clone);
+
+    default List<T> reverse() {
+        return reverse(false);
+    }
+
+
 }

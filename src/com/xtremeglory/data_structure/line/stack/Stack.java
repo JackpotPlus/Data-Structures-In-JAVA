@@ -1,9 +1,6 @@
 package com.xtremeglory.data_structure.line.stack;
 
-import com.xtremeglory.utils.DebugUtils;
-
 public interface Stack<T> {
-    DebugUtils $ = new DebugUtils(Stack.class);
 
     /**
      * 判断是否为空栈
@@ -54,7 +51,7 @@ public interface Stack<T> {
         if (elem != null) {
             push(elem, clone);
         } else {
-            $.logging("当前入栈元素为空!已拒绝该入栈请求.", true);
+            throw new NullPointerException();
         }
     }
 

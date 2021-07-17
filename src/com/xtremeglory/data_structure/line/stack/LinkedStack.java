@@ -1,16 +1,12 @@
 package com.xtremeglory.data_structure.line.stack;
 
-import com.xtremeglory.data_structure.line.list.ArrayList;
+import com.xtremeglory.data_structure.line.list.DoubleLinkedList;
 import com.xtremeglory.data_structure.line.list.List;
 
 import java.util.EmptyStackException;
 
-public class ArrayStack<T> implements Stack<T> {
-    private List<T> stack;
-
-    public ArrayStack() {
-        this.stack = new ArrayList<>();
-    }
+public class LinkedStack<T> implements Stack<T> {
+    private List<T> stack = new DoubleLinkedList<>();
 
     @Override
     public boolean isEmpty() {

@@ -1,15 +1,30 @@
 package com.xtremeglory.data_structure.line.queue;
 
 public interface Queue<T> {
+
     boolean isEmpty();
 
     boolean isFull();
 
     int size();
 
-    void enQueue(T elem);
+    default void enQueue(T elem) {
+        enQueue(elem, false);
+    }
 
-    void enQueueIfNotNull(T elem);
+    void enQueue(T elem, boolean clone);
+
+    default void enQueueIfNotNull(T elem) {
+        enQueueIfNotNull(elem, false);
+    }
+
+    default void enQueueIfNotNull(T elem, boolean clone) {
+        if (elem != null) {
+            enQueue(elem, clone);
+        } else {
+            throw new NullPointerException();
+        }
+    }
 
     T front();
 

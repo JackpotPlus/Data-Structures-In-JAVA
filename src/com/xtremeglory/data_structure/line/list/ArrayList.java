@@ -36,6 +36,7 @@ public class ArrayList<T> implements List<T>, RandomAccess {
         this.elements = new Object[capacity];
         this.size = 0;
         this.capacity = capacity;
+        this.logger.setLevel(Level.INFO);
     }
 
     public ArrayList(Level level) {

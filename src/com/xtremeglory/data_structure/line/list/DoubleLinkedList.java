@@ -7,12 +7,7 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * 带有头结点和尾指针的单链表
- *
- * @param <T>
- */
-public class LinkedList<T> implements List<T> {
+public class DoubleLinkedList<T> implements List<T> {
     private Logger logger = Logger.getLogger("com.xtremeglory.data_structure.line.list");
 
     private int size;
@@ -23,26 +18,29 @@ public class LinkedList<T> implements List<T> {
     protected static final class Node<T> {
         T elem;
         Node<T> next;
+        Node<T> prev;
 
         Node() {
             this.elem = null;
             this.next = null;
+            this.prev = null;
         }
 
-        Node(T elem, Node<T> next, boolean clone) {
+        Node(T elem, Node<T> prev, Node<T> next, boolean clone) {
             this.elem = clone ? CopyUtils.clone(elem) : elem;
+            this.prev = prev;
             this.next = next;
         }
     }
 
-    public LinkedList() {
+    public DoubleLinkedList() {
         this.size = 0;
         this.head = new Node<>();
         this.rear = this.head;
         this.point = this.head;
     }
 
-    public LinkedList(Level level) {
+    public DoubleLinkedList(Level level) {
         this();
         this.logger.setLevel(level);
     }
@@ -53,37 +51,43 @@ public class LinkedList<T> implements List<T> {
     }
 
     protected Node<T> getPrevNode(int index) {
-        Node<T> point = head;
-        if (index == size) {
-            point = rear;
+        Node<T> point;
+        boolean mode;
+        if (size - index >= index) {
+            point = head;
+            mode = true;
         } else {
-            while (index > 0) {
-                point = point.next;
-                --index;
-            }
+            index = size - index;
+            point = rear;
+            mode = false;
+        }
+
+        while (index > 0) {
+            point = mode ? point.next : point.prev;
+            --index;
         }
         return point;
     }
 
     protected Node<T> getNode(int index) {
-        return index == size - 1 ? rear : getPrevNode(index).next;
+        return getPrevNode(index).next;
     }
 
     @Override
     public void insert(T elem, int index, boolean clone) {
-        //判空
         if (elem == null) {
             //线性表允许插入null元素,但会发出警告
             logger.warning("当前插入元素为null");
         }
-        //检查索引
+
         if (rangeCheck(index, true)) {
-            //插入元素
-            //如果是插入到最后一个,直接插入
-            Node<T> point = getPrevNode(index);
-            Node<T> node = new Node<>(elem, point.next, clone);
-            point.next = node;
-            if (index == size) {//如果是最后一个,还需要更新尾指针
+            Node<T> prev = getPrevNode(index);
+            Node<T> node = new Node<>(elem, prev, prev.next, clone);
+            prev.next = node;
+            if (node.next != null) {
+                node.next.prev = node;
+            } else {
+                //是最后一个元素,更新指针
                 rear = node;
             }
             ++size;
@@ -112,13 +116,14 @@ public class LinkedList<T> implements List<T> {
 
     @Override
     public T remove(int index) {
-        //检查索引
         if (rangeCheck(index, false)) {
-            Node<T> point = getPrevNode(index);
-            Node<T> node = point.next;
-            point.next = point.next.next;
-            if (index == size - 1) {//如果是最后一个,还需要更新尾指针
-                rear = point;
+            Node<T> prev = getPrevNode(index);
+            Node<T> node = prev.next;
+            prev.next = prev.next.next;
+            if (prev.next != null) {
+                prev.next.prev = prev;
+            } else {
+                rear = prev;
             }
             --size;
             return node.elem;
@@ -149,7 +154,7 @@ public class LinkedList<T> implements List<T> {
         int index = begin;
         Node<T> point = getNode(begin);
         if (elem != null) {
-            while (point != null) {
+            while (index < size) {
                 if (elem.equals(point.elem)) {
                     return index;
                 }
@@ -157,7 +162,7 @@ public class LinkedList<T> implements List<T> {
                 ++index;
             }
         } else {
-            while (point != null) {
+            while (index < size) {
                 if (point.elem == null) {
                     return index;
                 }
@@ -165,8 +170,6 @@ public class LinkedList<T> implements List<T> {
                 ++index;
             }
         }
-
-        logger.info("未找到元素:" + elem);
         return ELEM_NOT_EXIST_INDEX;
     }
 
@@ -178,7 +181,7 @@ public class LinkedList<T> implements List<T> {
         int index = begin;
         Node<T> point = getNode(begin);
         if (elem != null) {
-            while (point != null) {
+            while (index < size) {
                 if (point.elem != null && cmp.compare(elem, point.elem) == 0) {
                     return index;
                 }
@@ -186,7 +189,7 @@ public class LinkedList<T> implements List<T> {
                 ++index;
             }
         } else {
-            while (point != null) {
+            while (index < size) {
                 if (point.elem == null) {
                     return index;
                 }
@@ -194,17 +197,15 @@ public class LinkedList<T> implements List<T> {
                 ++index;
             }
         }
-
-        logger.info("未找到元素:" + elem);
         return ELEM_NOT_EXIST_INDEX;
     }
 
     @Override
     public List<T> reverse(boolean clone) {
-        return reverse(head, new LinkedList<>(), clone);
+        return reverse(head, new DoubleLinkedList<>(), clone);
     }
 
-    protected List<T> reverse(Node<T> node, LinkedList<T> list, boolean clone) {
+    protected List<T> reverse(Node<T> node, DoubleLinkedList<T> list, boolean clone) {
         if (node.next != null) {
             reverse(node.next, list, clone);
         }
@@ -214,9 +215,10 @@ public class LinkedList<T> implements List<T> {
         return list;
     }
 
+
     @Override
     public Iterator<T> iterator() {
-        return new ListIterator(head);
+        return new ListIterator(this.head);
     }
 
     class ListIterator implements Iterator<T> {

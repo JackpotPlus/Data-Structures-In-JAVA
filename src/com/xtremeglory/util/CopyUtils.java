@@ -1,9 +1,8 @@
-package com.xtremeglory.utils;
+package com.xtremeglory.util;
 
 import java.io.*;
 
 public class CopyUtils {
-    private static DebugUtils $ = new DebugUtils(CopyUtils.class);
 
     private CopyUtils() {
         throw new AssertionError();
@@ -12,7 +11,7 @@ public class CopyUtils {
     @SuppressWarnings("unchecked")
     public static <T> T clone(T obj) {
         if (!(obj instanceof Serializable)) {
-            $.logging("不支持的深拷贝操作", true);
+            System.err.println("不支持的深拷贝操作");
         }
         try {
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
